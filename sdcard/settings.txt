@@ -1,0 +1,42 @@
+# フォーマットは↓のような感じです。
+# 【補足】行頭の「#」以降は何を書いても構いません(無視します)。
+# 　　　　「#」行は複数あっても構いません。
+#
+# # ← 設定開始の合図として行頭に「#」を置きます。
+# 設定値
+#
+# 【補足】設定は順番／個数が決まっています。
+# 　　　　順番を入れ替えたり、削除／追加したりしないように注意ください。
+# 【補足】設定開始の合図の「#」行に設定項目名／補足(※)を書いていますが、
+# 　　　　人に分かり易くするためで、プログラムでは特に使っていません。
+# 　　　　自分に分かり易いように、メモ書き等を追加しても大丈夫です。
+#
+# TTS_API_KEY
+YOUR_TSS_API_KEY
+
+# DEFAULT_AVATAR　※あたる(0)/ラム(1)/スタック(2)/スースー(3)/ブラウン(4)
+1
+
+# TIME_ANNOUNCE_SENTENCE　※時刻通知メッセージ
+現在の時刻は%d時%d分です。
+
+# TIME_ANNOUNCE_INTERVAL　※N分間隔で時刻通知
+10
+
+# TIME_ANNOUNCE_START　※朝のN時0分から時刻通知
+7
+
+# TIME_ANNOUNCE_END　※夜のN-1時59分まで時刻通知
+21
+
+# SERVO_PIN_X　※Core2の場合はPort.Aなら33 / Port.Cなら13、Core2以外の場合は21を記入
+33
+
+# SERVO_PIN_Y　※Core2の場合はPort.Aなら32 / Port.Cなら14、Core2以外の場合は22を記入
+32
+
+# START_DEGREE_VALUE_X_OFFSET　※Stackchan-tester-core2でのXの調整値を記入
+0
+
+# START_DEGREE_VALUE_Y_OFFSET　※Stackchan-tester-core2でのYの調整値を記入
+0

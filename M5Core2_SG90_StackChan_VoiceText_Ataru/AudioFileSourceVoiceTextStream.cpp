@@ -54,6 +54,7 @@ String URLEncode(const char* msg) {
 
 AudioFileSourceVoiceTextStream::AudioFileSourceVoiceTextStream()
 {
+  tts_api_key = tts_user;
   pos = 0;
   reconnectTries = 0;
   saveURL[0] = 0;
@@ -62,7 +63,18 @@ AudioFileSourceVoiceTextStream::AudioFileSourceVoiceTextStream()
 AudioFileSourceVoiceTextStream::AudioFileSourceVoiceTextStream(const char *tts_text, const char *tts_parms)
 {
 // printf("AudioFileSourceVoiceTextStream\r\n");
- saveURL[0] = 0;
+  tts_api_key = tts_user;
+  saveURL[0] = 0;
+  reconnectTries = 0;
+  text = tts_text;
+  parms = tts_parms;
+  open((const char *)tts_url.c_str());
+}
+
+AudioFileSourceVoiceTextStream::AudioFileSourceVoiceTextStream(const char *tts_text, const char *tts_parms, const char *tts_api_key_arg)
+{
+  tts_api_key = String(tts_api_key_arg);
+  saveURL[0] = 0;
   reconnectTries = 0;
   text = tts_text;
   parms = tts_parms;
@@ -78,14 +90,14 @@ bool AudioFileSourceVoiceTextStream::open(const char *url)
 #endif
 
   //request header for VoiceText Web API
-   String auth = base64::encode(tts_user + ":" + tts_pass);
-   http.addHeader("Authorization", "Basic " + auth);
-   http.addHeader("Content-Type", "application/x-www-form-urlencoded");
-   String request = String("text=") + URLEncode(text) + String(parms);
-   http.addHeader("Content-Length", String(request.length()));
+  String auth = base64::encode(tts_api_key + ":" + tts_pass);
+  http.addHeader("Authorization", "Basic " + auth);
+  http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+  String request = String("text=") + URLEncode(text) + String(parms);
+  http.addHeader("Content-Length", String(request.length()));
 
-   //Make the request
-   int code = http.POST(request);   
+  //Make the request
+  int code = http.POST(request);
 
 // printf("code=%d\r\n",code);
 

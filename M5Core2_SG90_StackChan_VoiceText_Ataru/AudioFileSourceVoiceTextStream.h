@@ -24,7 +24,7 @@
 #include <Arduino.h>
 #ifdef ESP32
   #include <HTTPClient.h>
-  #include <base64.h>       // for http basic auth 
+  #include <base64.h>       // for http basic auth
 #else
   #include <ESP8266HTTPClient.h>
 #endif
@@ -37,8 +37,9 @@ class AudioFileSourceVoiceTextStream : public AudioFileSource
   public:
     AudioFileSourceVoiceTextStream();
     AudioFileSourceVoiceTextStream(const char *tts_text, const char *tts_parms);
+    AudioFileSourceVoiceTextStream(const char *tts_text, const char *tts_parms, const char *tts_api_key_arg);
     virtual ~AudioFileSourceVoiceTextStream() override;
-    
+
     virtual bool open(const char *url) override;
     virtual uint32_t read(void *data, uint32_t len) override;
     virtual uint32_t readNonBlock(void *data, uint32_t len) override;
@@ -63,6 +64,7 @@ class AudioFileSourceVoiceTextStream : public AudioFileSource
     char saveURL[128];
     const char *text;
     const char *parms;
+    String tts_api_key;
 };
 
 
