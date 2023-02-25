@@ -10,6 +10,11 @@
   【補足】TTS_API_KEYについてはrobo8080さんのオリジナルのドキュメント(↓)を確認ください
 - 一応「SDカードが挿入されていない場合」or「SDカードは挿入されているが所定の設定ファイルがない場合」でも最低限の動作は行えるようにデフォルト値を仕込んであります
 
+## 変更点(0.2.0→0.2.x(準備中))
+
+1. 本家の変更( [サーボループでlipsyncが占有されるため、別タスク化](https://github.com/robo8080/M5Core2_SG90_StackChan_VoiceText_Ataru/pull/2) )を取り込む
+1. スタックちゃんの水色化を対策 ⇒ [M5Stack-Avatar](https://github.com/meganetaaan/m5stack-avatar/)ライブラリのバージョンを0.8.1から0.8.2に変更
+
 ## 変更点(本家→0.2.0)
 
 1. 各種動作設定(TTS_API_KEY含む)、WiFi情報等をSDカード内の各種設定ファイルに移動しました(manba036オリジナル)  
