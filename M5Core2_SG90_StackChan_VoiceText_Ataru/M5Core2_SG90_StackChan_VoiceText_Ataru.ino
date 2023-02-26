@@ -66,7 +66,7 @@ int current_avatar_index = 0;
 const char *DEFAULT_SETTINGS[NUMBER_OF_SETTINGS] = {
     "YOUR_TSS_API_KEY",           // TTS_API_KEY
     "0",                          // DEFAULT_AVATAR　※あたる(0)/ラム(1)/スタック(2)/スースー(3)/ブラウン(4)
-    "現在の時刻は%d時%d分です。", // TIME_ANNOUNCE_SENTENCE　※時刻通知メッセージ
+    "現在の時刻は%d時%sです。",      // TIME_ANNOUNCE_SENTENCE　※時刻通知メッセージ
     "10",                         // TIME_ANNOUNCE_INTERVAL　※N分間隔で時刻通知
     "7",                          // TIME_ANNOUNCE_START　※朝のN時0分から時刻通知
     "21",                         // TIME_ANNOUNCE_END　※夜のN-1時59分まで時刻通知
@@ -111,15 +111,18 @@ char emotion[NUMBER_OF_MESSAGES][MAX_LENGTH_MESSAGE_INFO];
 char who[NUMBER_OF_MESSAGES][MAX_LENGTH_MESSAGE_INFO];
 
 #define TIME_ANNOUNCE_MESSAGES_FILENAME "/time_announce_messages.txt"
-#define NUMBER_OF_TIME_ANNOUNCE_MESSAGES 16
+#define NUMBER_OF_TIME_ANNOUNCE_MESSAGES 128
 #define MAX_LENGTH_TIME_ANNOUNCE_MESSAGE 256
-#define MAX_LENGTH_TIME_ANNOUNCE_MESSAGE_INFO 4
+#define MAX_LENGTH_TIME_ANNOUNCE_MESSAGE_INFO 16
+const char *WD[7] = { "日", "月", "火", "水", "木", "金", "土" };
+const char *DEFAULT_WD = "日月火水木金土";
 
 int pre_min;
 int time_announce_message_count;
 char time_announce_message[NUMBER_OF_TIME_ANNOUNCE_MESSAGES][MAX_LENGTH_TIME_ANNOUNCE_MESSAGE];
 char time_announce_hours[NUMBER_OF_TIME_ANNOUNCE_MESSAGES][MAX_LENGTH_TIME_ANNOUNCE_MESSAGE_INFO];
 char time_announce_minutes[NUMBER_OF_TIME_ANNOUNCE_MESSAGES][MAX_LENGTH_TIME_ANNOUNCE_MESSAGE_INFO];
+char time_announce_day_of_week[NUMBER_OF_TIME_ANNOUNCE_MESSAGES][MAX_LENGTH_TIME_ANNOUNCE_MESSAGE_INFO];
 
 struct GREETING
 {
@@ -490,9 +493,23 @@ void setup() {
   Serial.printf("# time_announce_message_count = %d\n", time_announce_message_count);
   for (int index = 0; index < time_announce_message_count; index++)
   {
+    int pos = String(time_announce_hours[index]).indexOf(":");
+    if (pos != -1)
+    {
+      strcpy((char *)time_announce_day_of_week[index], (char *)time_announce_minutes[index]);
+      char tmp[3];
+      String(time_announce_hours[index]).substring(pos + 1).toCharArray(tmp, 3);
+      strcpy((char *)time_announce_minutes[index], (char *)tmp);
+      time_announce_hours[index][pos] = 0;
+    }
+    else
+    {
+      strcpy((char *)time_announce_day_of_week[index], (char *)DEFAULT_WD);
+    }
     Serial.printf("%s\n", (char *)time_announce_message[index]);
     Serial.printf("%s\n", (char *)time_announce_hours[index]);
     Serial.printf("%s\n", (char *)time_announce_minutes[index]);
+    Serial.printf("%s\n", (char *)time_announce_day_of_week[index]);
   }
   Serial.println("");
 
@@ -761,6 +778,33 @@ void VoiceText_tts(char *text, char *emotion)
   mp3->begin(buff, out);
 }
 
+void create_time_announce_sentence(char *sentence, char *format, int hour, int min)
+{
+  if (String(format).indexOf("%s") != -1)
+  {
+    // 0.2.1以降の設定ファイル(%d時%s)向け
+    char min_str[16];
+    if (min == 0)
+    {
+      sprintf(min_str, "ちょうど");
+    }
+    else if (min == 30)
+    {
+      sprintf(min_str, "半");
+    }
+    else
+    {
+      sprintf(min_str, "%d分", min);
+    }
+    sprintf(sentence, format, hour, (char *)min_str);
+  }
+  else
+  {
+    // 0.2.0の設定ファイル(%d時%d分)向け
+    sprintf(sentence, format, hour, min);
+  }
+}
+
 void announce_time_if_needed()
 {
   time_t nowSecs = time(nullptr);
@@ -774,11 +818,11 @@ void announce_time_if_needed()
     {
       for (int index = 0; index < time_announce_message_count; index++)
       {
-        if (tm->tm_hour == String(time_announce_hours[index]).toInt() && tm->tm_min == String(time_announce_minutes[index]).toInt())
+        if (tm->tm_hour == String(time_announce_hours[index]).toInt() && tm->tm_min == String(time_announce_minutes[index]).toInt() && String(time_announce_day_of_week[index]).indexOf(WD[tm->tm_wday]) != -1)
         {
           char tmp[64];
           char msg[MAX_LENGTH_TIME_ANNOUNCE_MESSAGE];
-          sprintf(tmp, (char *)settings[SETTINGS_INDEX_TIME_ANNOUNCE_SENTENCE], tm->tm_hour, tm->tm_min);
+          create_time_announce_sentence((char *)tmp, (char *)settings[SETTINGS_INDEX_TIME_ANNOUNCE_SENTENCE], tm->tm_hour, tm->tm_min);
           sprintf(msg, "%s%s", tmp, (char *)time_announce_message[index]);
           VoiceText_tts((char *)msg, (char *)"Neutral");
           done = true;
@@ -792,7 +836,7 @@ void announce_time_if_needed()
       if (String(settings[SETTINGS_INDEX_TIME_ANNOUNCE_INTERVAL]).toInt() != 0 && tm->tm_min % String(settings[SETTINGS_INDEX_TIME_ANNOUNCE_INTERVAL]).toInt() == 0)
       {
         char msg[64];
-        sprintf(msg, (char *)settings[SETTINGS_INDEX_TIME_ANNOUNCE_SENTENCE], tm->tm_hour, tm->tm_min);
+        create_time_announce_sentence((char *)msg, (char *)settings[SETTINGS_INDEX_TIME_ANNOUNCE_SENTENCE], tm->tm_hour, tm->tm_min);
         VoiceText_tts((char *)msg, (char *)"Neutral");
       }
     }
