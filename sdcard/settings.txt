@@ -17,8 +17,8 @@ YOUR_TSS_API_KEY
 # DEFAULT_AVATAR　※あたる(0)/ラム(1)/スタック(2)/スースー(3)/ブラウン(4)
 1
 
-# TIME_ANNOUNCE_SENTENCE　※時刻通知メッセージ
-現在の時刻は%d時%d分です。
+# TIME_ANNOUNCE_SENTENCE　※時刻通知メッセージ、%s部分に「N分」「ちょうど(N=0)」「半(N=30)」が入ります
+現在の時刻は%d時%sです。
 
 # TIME_ANNOUNCE_INTERVAL　※N分間隔で時刻通知
 10
