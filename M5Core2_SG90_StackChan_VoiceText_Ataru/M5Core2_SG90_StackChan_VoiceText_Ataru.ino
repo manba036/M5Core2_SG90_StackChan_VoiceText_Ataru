@@ -51,6 +51,8 @@ int current_avatar_index = 0;
 #define SETTINGS_FILENAME "/settings.txt"
 #define NUMBER_OF_SETTINGS 10
 #define MAX_LENGTH_SETTINGS 128
+#define MAX_LENGTH_GREETING 128
+#define MAX_LENGTH_TIME_ANNOUNCE_SENTENCE 128
 #define SETTINGS_INDEX_TTS_API_KEY 0                 // char*
 #define SETTINGS_INDEX_DEFAULT_AVATAR 1              // int
 #define SETTINGS_INDEX_TIME_ANNOUNCE_SENTENCE 2      // char*
@@ -88,9 +90,9 @@ char settings[NUMBER_OF_SETTINGS][MAX_LENGTH_SETTINGS];
 #ifdef USE_VOICE_TEXT
 
 #define MESSAGES_FILENAME "/messages.txt"
-#define NUMBER_OF_MESSAGES 128
+#define NUMBER_OF_MESSAGES 64
 #define MAX_LENGTH_MESSAGE 256
-#define MAX_LENGTH_MESSAGE_INFO 16
+#define MAX_LENGTH_MESSAGE_INFO 32
 
 const char *DEFAULT_MESSAGE = "よろしくね！";
 const char *DEFAULT_EMOTION = "Happy";
@@ -113,7 +115,7 @@ char who[NUMBER_OF_MESSAGES][MAX_LENGTH_MESSAGE_INFO];
 #define TIME_ANNOUNCE_MESSAGES_FILENAME "/time_announce_messages.txt"
 #define NUMBER_OF_TIME_ANNOUNCE_MESSAGES 128
 #define MAX_LENGTH_TIME_ANNOUNCE_MESSAGE 256
-#define MAX_LENGTH_TIME_ANNOUNCE_MESSAGE_INFO 16
+#define MAX_LENGTH_TIME_ANNOUNCE_MESSAGE_INFO 32
 const char *WD[7] = { "日", "月", "火", "水", "木", "金", "土" };
 const char *DEFAULT_WD = "日月火水木金土";
 
@@ -128,7 +130,7 @@ struct GREETING
 {
   int h_start;
   int h_end;
-  char greeting[64];
+  char greeting[MAX_LENGTH_GREETING];
 };
 #define NUMBER_OF_GREETINGS 11
 GREETING greetings[NUMBER_OF_GREETINGS] = {
@@ -764,7 +766,7 @@ char *get_greeting()
 
 void VoiceText_tts(char *text, char *emotion)
 {
-  char msg[512];
+  char msg[MAX_LENGTH_GREETING * 3 + MAX_LENGTH_TIME_ANNOUNCE_SENTENCE + MAX_LENGTH_TIME_ANNOUNCE_MESSAGE];
   sprintf(msg, "%s%s%s%s", get_exclamation(), get_exclamation(), get_greeting(), text);
   Serial.println(msg);
   Serial.println(emotion);
@@ -783,7 +785,7 @@ void create_time_announce_sentence(char *sentence, char *format, int hour, int m
   if (String(format).indexOf("%s") != -1)
   {
     // 0.2.1以降の設定ファイル(%d時%s)向け
-    char min_str[16];
+    char min_str[32];
     if (min == 0)
     {
       sprintf(min_str, "ちょうど");
@@ -820,7 +822,7 @@ void announce_time_if_needed()
       {
         if (tm->tm_hour == String(time_announce_hours[index]).toInt() && tm->tm_min == String(time_announce_minutes[index]).toInt() && String(time_announce_day_of_week[index]).indexOf(WD[tm->tm_wday]) != -1)
         {
-          char tmp[64];
+          char tmp[MAX_LENGTH_TIME_ANNOUNCE_SENTENCE];
           char msg[MAX_LENGTH_TIME_ANNOUNCE_MESSAGE];
           create_time_announce_sentence((char *)tmp, (char *)settings[SETTINGS_INDEX_TIME_ANNOUNCE_SENTENCE], tm->tm_hour, tm->tm_min);
           sprintf(msg, "%s%s", tmp, (char *)time_announce_message[index]);
@@ -835,7 +837,7 @@ void announce_time_if_needed()
     {
       if (String(settings[SETTINGS_INDEX_TIME_ANNOUNCE_INTERVAL]).toInt() != 0 && tm->tm_min % String(settings[SETTINGS_INDEX_TIME_ANNOUNCE_INTERVAL]).toInt() == 0)
       {
-        char msg[64];
+        char msg[MAX_LENGTH_TIME_ANNOUNCE_SENTENCE];
         create_time_announce_sentence((char *)msg, (char *)settings[SETTINGS_INDEX_TIME_ANNOUNCE_SENTENCE], tm->tm_hour, tm->tm_min);
         VoiceText_tts((char *)msg, (char *)"Neutral");
       }
