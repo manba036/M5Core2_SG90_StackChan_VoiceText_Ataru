@@ -49,7 +49,7 @@ int avatar_indexes[3] = {0, 1, 2};
 int current_avatar_index = 0;
 
 #define SETTINGS_FILENAME "/settings.txt"
-#define NUMBER_OF_SETTINGS 10
+#define NUMBER_OF_SETTINGS 11
 #define MAX_LENGTH_SETTINGS 128
 #define MAX_LENGTH_GREETING 128
 #define MAX_LENGTH_TIME_ANNOUNCE_SENTENCE 128
@@ -63,6 +63,7 @@ int current_avatar_index = 0;
 #define SETTINGS_INDEX_SERVO_PIN_Y 7                 // int
 #define SETTINGS_INDEX_START_DEGREE_VALUE_X_OFFSET 8 // int
 #define SETTINGS_INDEX_START_DEGREE_VALUE_Y_OFFSET 9 // int
+#define SETTINGS_INDEX_BRIGHTNESS_WHEN_SLEEPING 10   // int
 
 // 基本、ソースコードの編集は不要です　※SDカード上の設定ファイルを編集してください
 const char *DEFAULT_SETTINGS[NUMBER_OF_SETTINGS] = {
@@ -84,6 +85,7 @@ const char *DEFAULT_SETTINGS[NUMBER_OF_SETTINGS] = {
 #endif
     "0", // START_DEGREE_VALUE_X_OFFSET　※Stackchan-tester-core2での調整値を記入
     "0", // START_DEGREE_VALUE_Y_OFFSET　※Stackchan-tester-core2での調整値を記入
+    "10", // BRIGHTNESS_WHEN_SLEEPING　※スタックちゃんが寝ている時(TIME_ANNOUNCE_START～TIME_ANNOUNCE_END以外)の画面の明るさを記入(0～100)
 };
 char settings[NUMBER_OF_SETTINGS][MAX_LENGTH_SETTINGS];
 
@@ -175,6 +177,8 @@ bool flag_mp3_begin;
 
 ServoEasing servo_x;
 ServoEasing servo_y;
+bool flag_sleep;
+bool flag_sleep_pre;
 
 void behavior(void *args)
 {
@@ -207,13 +211,16 @@ void servoloop(void *args)
   {
     Avatar *avatar = ctx->getAvatar();
     avatar->getGaze(&gazeY, &gazeX);
-    servo_x.setEaseTo(START_DEGREE_VALUE_X + String(settings[SETTINGS_INDEX_START_DEGREE_VALUE_X_OFFSET]).toInt() + (int)(20.0 * gazeX));
-    if(gazeY < 0) {
-      servo_y.setEaseTo(START_DEGREE_VALUE_Y + String(settings[SETTINGS_INDEX_START_DEGREE_VALUE_Y_OFFSET]).toInt() + (int)(20.0 * gazeY));
-    } else {
-      servo_y.setEaseTo(START_DEGREE_VALUE_Y + String(settings[SETTINGS_INDEX_START_DEGREE_VALUE_Y_OFFSET]).toInt() + (int)(10.0 * gazeY));
+    if (!flag_sleep)
+    {
+      servo_x.setEaseTo(START_DEGREE_VALUE_X + String(settings[SETTINGS_INDEX_START_DEGREE_VALUE_X_OFFSET]).toInt() + (int)(20.0 * gazeX));
+      if(gazeY < 0) {
+        servo_y.setEaseTo(START_DEGREE_VALUE_Y + String(settings[SETTINGS_INDEX_START_DEGREE_VALUE_Y_OFFSET]).toInt() + (int)(20.0 * gazeY));
+      } else {
+        servo_y.setEaseTo(START_DEGREE_VALUE_Y + String(settings[SETTINGS_INDEX_START_DEGREE_VALUE_Y_OFFSET]).toInt() + (int)(10.0 * gazeY));
+      }
+      synchronizeAllServosStartAndWaitForAllServosToStop();
     }
-    synchronizeAllServosStartAndWaitForAllServosToStop();
     vTaskDelay(33/portTICK_PERIOD_MS);
   }
 }
@@ -651,6 +658,8 @@ void setup() {
   servo_x.setEasingType(EASE_QUADRATIC_IN_OUT);
   servo_y.setEasingType(EASE_QUADRATIC_IN_OUT);
   setSpeedForAllServos(60);
+  flag_sleep = false;
+  flag_sleep_pre = false;
 
   faces[AVATAR_ATARU] = new AtaruFace();
   faces[AVATAR_RAM] = new RamFace();
@@ -814,6 +823,32 @@ void announce_time_if_needed()
   if (pre_min != tm->tm_min)
   {
     pre_min = tm->tm_min;
+
+    flag_sleep_pre = flag_sleep;
+    if (tm->tm_hour >= String(settings[SETTINGS_INDEX_TIME_ANNOUNCE_START]).toInt() && tm->tm_hour < String(settings[SETTINGS_INDEX_TIME_ANNOUNCE_END]).toInt())
+    {
+      flag_sleep = false;
+    }
+    else
+    {
+      flag_sleep = true;
+    }
+
+    if (!flag_sleep_pre && flag_sleep)
+    {
+      // Sleep
+      M5.Lcd.setBrightness(String(settings[SETTINGS_INDEX_BRIGHTNESS_WHEN_SLEEPING]).toInt());
+      avatar.setExpression(Expression::Sleepy);
+      servo_x.setEaseTo(START_DEGREE_VALUE_X + String(settings[SETTINGS_INDEX_START_DEGREE_VALUE_X_OFFSET]).toInt());
+      servo_y.setEaseTo(START_DEGREE_VALUE_Y + String(settings[SETTINGS_INDEX_START_DEGREE_VALUE_Y_OFFSET]).toInt() + 5.0);
+      synchronizeAllServosStartAndWaitForAllServosToStop();
+    }
+    else if (flag_sleep_pre && !flag_sleep)
+    {
+      // Wake up
+      M5.Lcd.setBrightness(100);
+      avatar.setExpression(Expression::Neutral);
+    }
 
     bool done = false;
     if (time_announce_message_count > 0)

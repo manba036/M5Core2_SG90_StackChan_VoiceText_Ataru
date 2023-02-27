@@ -40,3 +40,6 @@ YOUR_TSS_API_KEY
 
 # START_DEGREE_VALUE_Y_OFFSET　※Stackchan-tester-core2でのYの調整値を記入
 0
+
+# BRIGHTNESS_WHEN_SLEEPING　※スタックちゃんが寝ている時(TIME_ANNOUNCE_START～TIME_ANNOUNCE_END以外)の画面の明るさを記入(0～100)
+10
