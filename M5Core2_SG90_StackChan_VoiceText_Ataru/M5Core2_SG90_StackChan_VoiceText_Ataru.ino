@@ -49,7 +49,7 @@ int avatar_indexes[3] = {0, 1, 2};
 int current_avatar_index = 0;
 
 #define SETTINGS_FILENAME "/settings.txt"
-#define NUMBER_OF_SETTINGS 11
+#define NUMBER_OF_SETTINGS 12
 #define MAX_LENGTH_SETTINGS 128
 #define MAX_LENGTH_GREETING 128
 #define MAX_LENGTH_TIME_ANNOUNCE_SENTENCE 128
@@ -64,6 +64,7 @@ int current_avatar_index = 0;
 #define SETTINGS_INDEX_START_DEGREE_VALUE_X_OFFSET 8 // int
 #define SETTINGS_INDEX_START_DEGREE_VALUE_Y_OFFSET 9 // int
 #define SETTINGS_INDEX_BRIGHTNESS_WHEN_SLEEPING 10   // int
+#define SETTINGS_INDEX_GOOD_NIGHT_GREETING 11        // char*
 
 // 基本、ソースコードの編集は不要です　※SDカード上の設定ファイルを編集してください
 const char *DEFAULT_SETTINGS[NUMBER_OF_SETTINGS] = {
@@ -86,6 +87,7 @@ const char *DEFAULT_SETTINGS[NUMBER_OF_SETTINGS] = {
     "0", // START_DEGREE_VALUE_X_OFFSET　※Stackchan-tester-core2での調整値を記入
     "0", // START_DEGREE_VALUE_Y_OFFSET　※Stackchan-tester-core2での調整値を記入
     "10", // BRIGHTNESS_WHEN_SLEEPING　※スタックちゃんが寝ている時(TIME_ANNOUNCE_START～TIME_ANNOUNCE_END以外)の画面の明るさを記入(0～100)
+    "おやすみなさい！", // GOOD_NIGHT_GREETING　※おやすみの挨拶
 };
 char settings[NUMBER_OF_SETTINGS][MAX_LENGTH_SETTINGS];
 
@@ -846,6 +848,7 @@ void announce_time_if_needed()
   struct tm *tm = localtime(&nowSecs);
   if (pre_min != tm->tm_min)
   {
+    bool done = false;
     pre_min = tm->tm_min;
 
     char current_time[6];
@@ -875,6 +878,13 @@ void announce_time_if_needed()
       servo_x.setEaseTo(START_DEGREE_VALUE_X + String(settings[SETTINGS_INDEX_START_DEGREE_VALUE_X_OFFSET]).toInt());
       servo_y.setEaseTo(START_DEGREE_VALUE_Y + String(settings[SETTINGS_INDEX_START_DEGREE_VALUE_Y_OFFSET]).toInt() + 5.0);
       synchronizeAllServosStartAndWaitForAllServosToStop();
+
+      char tmp[MAX_LENGTH_TIME_ANNOUNCE_SENTENCE];
+      char msg[MAX_LENGTH_TIME_ANNOUNCE_MESSAGE];
+      create_time_announce_sentence((char *)tmp, (char *)settings[SETTINGS_INDEX_TIME_ANNOUNCE_SENTENCE], tm->tm_hour, tm->tm_min);
+      sprintf(msg, "%s%s", tmp, (char *)settings[SETTINGS_INDEX_GOOD_NIGHT_GREETING]);
+      VoiceText_tts((char *)msg, (char *)"Neutral");
+      done = true;
     }
     else if (flag_sleep_pre && !flag_sleep)
     {
@@ -884,8 +894,7 @@ void announce_time_if_needed()
       avatar.setExpression(default_expression);
     }
 
-    bool done = false;
-    if (time_announce_message_count > 0)
+    if (!done && time_announce_message_count > 0)
     {
       for (int index = 0; index < time_announce_message_count; index++)
       {
