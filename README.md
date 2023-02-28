@@ -1,4 +1,4 @@
-# M5Core2_SG90_StackChan_VoiceText_Ataru forked from @robo8080
+# M5Core2_SG90_StackChan_VoiceText_Ataru_Kai forked from @robo8080
 
 [@robo8080さん](https://github.com/robo8080/M5Core2_SG90_StackChan_VoiceText_Ataru)からフォークし、[@katsuyoshiさん](https://github.com/katsuyoshi/M5Core2_SG90_StackChan_VoiceText_Ataru)のコードを参考にさせてもらったものです。
 
@@ -9,8 +9,8 @@
 - `settings.txt`の`TTS_API_KEY`と`wifi_info.txt`の`YOUR_WIFI_SSID`/`YOUR_WIFI_PASSWORD`1組を記入してもらえれば、ｽﾀｯｸﾁｬﾝが喋るようになると思います  
   【補足】TTS_API_KEYについてはrobo8080さんのオリジナルのドキュメント(↓)を確認ください
 - 一応「SDカードが挿入されていない場合」or「SDカードは挿入されているが所定の設定ファイルがない場合」でも最低限の動作は行えるようにデフォルト値を仕込んであります
-- 一応、設定ファイルは互換性を持たせているので、設定ファイルそのままで、ファームウェアを0.2.0から0.2.1に更新しても問題なく動きますが、  
-  0.2.1で時刻指定等を改善しているので、**0.2.1の./sdcardの設定ファイルを参考に設定ファイルを更新することをおススメします**
+- 一応、設定ファイルは互換性を持たせているので、設定ファイルそのままで、新しいファームウェアに更新しても問題なく動きますが、  
+  0.2.1以降で時刻指定等を改善しているので、**最新の./sdcardの設定ファイルを参考に設定ファイルを更新することをおススメします**
 
 ### このプログラムをビルドするのに必要な物(manba036版)
 
@@ -24,7 +24,15 @@
 * [ESP32Servo](https://github.com/madhephaestus/ESP32Servo/ "Title")ライブラリ(バージョン 0.9.0で動作確認をしました。)
 * [ESP8266Audio](https://github.com/earlephilhower/ESP8266Audio/ "Title")ライブラリ(バージョン 1.9.7で動作確認をしました。)
 
+## このプログラムの機能概要
+
+* 準備中
+
 ---
+## 変更点(0.2.1→0.2.2)
+
+* 準備中
+
 ## 変更点(0.2.0→0.2.1)
 
 1. 本家の変更( [サーボループでlipsyncが占有されるため、別タスク化](https://github.com/robo8080/M5Core2_SG90_StackChan_VoiceText_Ataru/pull/2) )を取り込み
