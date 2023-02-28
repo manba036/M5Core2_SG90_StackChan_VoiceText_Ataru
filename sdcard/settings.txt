@@ -23,11 +23,11 @@ YOUR_TSS_API_KEY
 # TIME_ANNOUNCE_INTERVAL　※N分間隔で時刻通知
 10
 
-# TIME_ANNOUNCE_START　※朝のN時0分から時刻通知
-7
+# TIME_ANNOUNCE_START　※朝のHH時MM分から時刻通知
+7:00
 
-# TIME_ANNOUNCE_END　※夜のN-1時59分まで時刻通知
-21
+# TIME_ANNOUNCE_END　※夜のHH時MM分-1分まで時刻通知
+21:00
 
 # SERVO_PIN_X　※Core2の場合はPort.Aなら33 / Port.Cなら13、Core2以外の場合は21を記入
 33

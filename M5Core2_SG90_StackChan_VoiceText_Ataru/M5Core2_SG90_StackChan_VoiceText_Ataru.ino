@@ -71,8 +71,8 @@ const char *DEFAULT_SETTINGS[NUMBER_OF_SETTINGS] = {
     "0",                          // DEFAULT_AVATAR　※あたる(0)/ラム(1)/スタック(2)/スースー(3)/ブラウン(4)
     "現在の時刻は%d時%sです。",      // TIME_ANNOUNCE_SENTENCE　※時刻通知メッセージ
     "10",                         // TIME_ANNOUNCE_INTERVAL　※N分間隔で時刻通知
-    "7",                          // TIME_ANNOUNCE_START　※朝のN時0分から時刻通知
-    "21",                         // TIME_ANNOUNCE_END　※夜のN-1時59分まで時刻通知
+    "7:00",                       // TIME_ANNOUNCE_START　※朝のHH時MM分から時刻通知
+    "21:00",                      // TIME_ANNOUNCE_END　※夜のHH時MM分-1分まで時刻通知
 #if defined(ARDUINO_M5STACK_Core2)
     "33", // SERVO_PIN_X　※Core2の場合はPort.Aなら33 / Port.Cなら13、Core2以外の場合は21を記入
     "32", // SERVO_PIN_Y　※Core2の場合はPort.Aなら32 / Port.Cなら14、Core2以外の場合は22を記入
@@ -818,6 +818,28 @@ void create_time_announce_sentence(char *sentence, char *format, int hour, int m
   }
 }
 
+void get_time_str(char *time_str_new, char *time_str_org)
+{
+  int hour;
+  int min;
+  int pos = String(time_str_org).indexOf(":");
+  if (pos != -1)
+  {
+    char hour_str[3];
+    char min_str[3];
+    String(time_str_org).substring(0, pos).toCharArray(hour_str, 3);
+    String(time_str_org).substring(pos + 1).toCharArray(min_str, 3);
+    hour = String(hour_str).toInt();
+    min = String(min_str).toInt();
+  }
+  else
+  {
+    hour = String(time_str_org).toInt();
+    min = 0;
+  }
+  sprintf(time_str_new, "%02d:%02d", hour, min);
+}
+
 void announce_time_if_needed()
 {
   time_t nowSecs = time(nullptr);
@@ -826,8 +848,16 @@ void announce_time_if_needed()
   {
     pre_min = tm->tm_min;
 
+    char current_time[6];
+    char start_time[6];
+    char end_time[6];
+    sprintf(current_time, "%02d:%02d", tm->tm_hour, tm->tm_min);
+    get_time_str((char *)start_time, (char *)settings[SETTINGS_INDEX_TIME_ANNOUNCE_START]);
+    get_time_str((char *)end_time, (char *)settings[SETTINGS_INDEX_TIME_ANNOUNCE_END]);
+    Serial.printf("Current: %s, Start: %s, End: %s\n", current_time, start_time, end_time);
+
     flag_sleep_pre = flag_sleep;
-    if (tm->tm_hour >= String(settings[SETTINGS_INDEX_TIME_ANNOUNCE_START]).toInt() && tm->tm_hour < String(settings[SETTINGS_INDEX_TIME_ANNOUNCE_END]).toInt())
+    if (String(current_time) >= String(start_time) && String(current_time) < String(end_time))
     {
       flag_sleep = false;
     }
@@ -872,7 +902,7 @@ void announce_time_if_needed()
       }
     }
 
-    if (!done && tm->tm_hour >= String(settings[SETTINGS_INDEX_TIME_ANNOUNCE_START]).toInt() && tm->tm_hour < String(settings[SETTINGS_INDEX_TIME_ANNOUNCE_END]).toInt())
+    if (!done && String(current_time) >= String(start_time) && String(current_time) < String(end_time))
     {
       if (String(settings[SETTINGS_INDEX_TIME_ANNOUNCE_INTERVAL]).toInt() != 0 && tm->tm_min % String(settings[SETTINGS_INDEX_TIME_ANNOUNCE_INTERVAL]).toInt() == 0)
       {
