@@ -179,6 +179,7 @@ ServoEasing servo_x;
 ServoEasing servo_y;
 bool flag_sleep;
 bool flag_sleep_pre;
+Expression default_expression;
 
 void behavior(void *args)
 {
@@ -660,6 +661,7 @@ void setup() {
   setSpeedForAllServos(60);
   flag_sleep = false;
   flag_sleep_pre = false;
+  default_expression = Expression::Neutral;
 
   faces[AVATAR_ATARU] = new AtaruFace();
   faces[AVATAR_RAM] = new RamFace();
@@ -838,7 +840,8 @@ void announce_time_if_needed()
     {
       // Sleep
       M5.Lcd.setBrightness(String(settings[SETTINGS_INDEX_BRIGHTNESS_WHEN_SLEEPING]).toInt());
-      avatar.setExpression(Expression::Sleepy);
+      default_expression = Expression::Sleepy;
+      avatar.setExpression(default_expression);
       servo_x.setEaseTo(START_DEGREE_VALUE_X + String(settings[SETTINGS_INDEX_START_DEGREE_VALUE_X_OFFSET]).toInt());
       servo_y.setEaseTo(START_DEGREE_VALUE_Y + String(settings[SETTINGS_INDEX_START_DEGREE_VALUE_Y_OFFSET]).toInt() + 5.0);
       synchronizeAllServosStartAndWaitForAllServosToStop();
@@ -847,7 +850,8 @@ void announce_time_if_needed()
     {
       // Wake up
       M5.Lcd.setBrightness(100);
-      avatar.setExpression(Expression::Neutral);
+      default_expression = Expression::Neutral;
+      avatar.setExpression(default_expression);
     }
 
     bool done = false;
@@ -898,7 +902,7 @@ void loop() {
       delete file;
       delete buff;
       Serial.println("# mp3 stop");
-      avatar.setExpression(Expression::Neutral);
+      avatar.setExpression(default_expression);
     }
     else if (millis() - lastms > 1000)
     {
