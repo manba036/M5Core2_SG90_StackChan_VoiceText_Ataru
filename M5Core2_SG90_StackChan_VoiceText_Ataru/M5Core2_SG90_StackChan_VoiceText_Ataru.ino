@@ -182,6 +182,9 @@ ServoEasing servo_y;
 bool flag_sleep;
 bool flag_sleep_pre;
 Expression default_expression;
+Expression current_expression;
+int default_brightness;
+int current_brightness;
 
 void behavior(void *args)
 {
@@ -242,7 +245,9 @@ void setup() {
   M5.Speaker.config(spk_config);
   //M5.Speaker.begin();
 
-  M5.Lcd.setBrightness(100);
+  default_brightness = 100;
+  current_brightness = default_brightness;
+  M5.Lcd.setBrightness(current_brightness);
   M5.Lcd.clear();
   M5.Lcd.setTextSize(2);
   delay(1000);
@@ -663,7 +668,6 @@ void setup() {
   setSpeedForAllServos(60);
   flag_sleep = false;
   flag_sleep_pre = false;
-  default_expression = Expression::Neutral;
 
   faces[AVATAR_ATARU] = new AtaruFace();
   faces[AVATAR_RAM] = new RamFace();
@@ -694,6 +698,9 @@ void setup() {
   avatar.init(8);
   current_avatar_index = String(settings[SETTINGS_INDEX_DEFAULT_AVATAR]).toInt();
   avatar.setFace(faces[current_avatar_index]);
+  default_expression = Expression::Neutral;
+  current_expression = default_expression;
+  avatar.setExpression(current_expression);
   avatar.setColorPalette(*cps[current_avatar_index]);
   avatar.addTask(behavior, "behavior");
   avatar.addTask(servoloop, "servoloop");
@@ -714,31 +721,38 @@ void set_expression(char *emotion)
 {
   if (String(emotion) == String("Neutral") || String(emotion) == String("Normal"))
   {
-    avatar.setExpression(Expression::Neutral);
+    current_expression = Expression::Neutral;
+    avatar.setExpression(current_expression);
   }
   else if (String(emotion) == String("Angry"))
   {
-    avatar.setExpression(Expression::Angry);
+    current_expression = Expression::Angry;
+    avatar.setExpression(current_expression);
   }
   else if (String(emotion) == String("Happy"))
   {
-    avatar.setExpression(Expression::Happy);
+    current_expression = Expression::Happy;
+    avatar.setExpression(current_expression);
   }
   else if (String(emotion) == String("Sad"))
   {
-    avatar.setExpression(Expression::Sad);
+    current_expression = Expression::Sad;
+    avatar.setExpression(current_expression);
   }
   else if (String(emotion) == String("Doubt") || String(emotion) == String("Worried"))
   {
-    avatar.setExpression(Expression::Doubt);
+    current_expression = Expression::Doubt;
+    avatar.setExpression(current_expression);
   }
   else if (String(emotion) == String("Sleepy"))
   {
-    avatar.setExpression(Expression::Sleepy);
+    current_expression = Expression::Sleepy;
+    avatar.setExpression(current_expression);
   }
   else
   {
-    avatar.setExpression(Expression::Neutral);
+    current_expression = Expression::Neutral;
+    avatar.setExpression(current_expression);
   }
 }
 
@@ -779,6 +793,9 @@ char *get_greeting()
 
 void VoiceText_tts(char *text, char *emotion)
 {
+  current_expression = Expression::Doubt;
+  avatar.setExpression(current_expression);
+  delay(1000);
   char msg[MAX_LENGTH_GREETING * 3 + MAX_LENGTH_TIME_ANNOUNCE_SENTENCE + MAX_LENGTH_TIME_ANNOUNCE_MESSAGE];
   sprintf(msg, "%s%s%s%s", get_exclamation(), get_exclamation(), get_greeting(), text);
   Serial.println(msg);
@@ -872,9 +889,8 @@ void announce_time_if_needed()
     if (!flag_sleep_pre && flag_sleep)
     {
       // Sleep
-      M5.Lcd.setBrightness(String(settings[SETTINGS_INDEX_BRIGHTNESS_WHEN_SLEEPING]).toInt());
+      default_brightness = String(settings[SETTINGS_INDEX_BRIGHTNESS_WHEN_SLEEPING]).toInt();
       default_expression = Expression::Sleepy;
-      avatar.setExpression(default_expression);
       servo_x.setEaseTo(START_DEGREE_VALUE_X + String(settings[SETTINGS_INDEX_START_DEGREE_VALUE_X_OFFSET]).toInt());
       servo_y.setEaseTo(START_DEGREE_VALUE_Y + String(settings[SETTINGS_INDEX_START_DEGREE_VALUE_Y_OFFSET]).toInt() + 5.0);
       synchronizeAllServosStartAndWaitForAllServosToStop();
@@ -889,9 +905,12 @@ void announce_time_if_needed()
     else if (flag_sleep_pre && !flag_sleep)
     {
       // Wake up
-      M5.Lcd.setBrightness(100);
+      default_brightness = 100;
+      current_brightness = default_brightness;
+      M5.Lcd.setBrightness(current_brightness);
       default_expression = Expression::Neutral;
-      avatar.setExpression(default_expression);
+      current_expression = default_expression;
+      avatar.setExpression(current_expression);
     }
 
     if (!done && time_announce_message_count > 0)
@@ -941,7 +960,17 @@ void loop() {
       delete file;
       delete buff;
       Serial.println("# mp3 stop");
-      avatar.setExpression(default_expression);
+      delay(1000);
+      if (current_brightness != default_brightness)
+      {
+        current_brightness = default_brightness;
+        M5.Lcd.setBrightness(current_brightness);
+      }
+      if (current_expression != default_expression)
+      {
+        current_expression = default_expression;
+        avatar.setExpression(current_expression);
+      }
     }
     else if (millis() - lastms > 1000)
     {
@@ -1002,9 +1031,7 @@ void loop() {
       M5.Speaker.tone(2000, 200);
       if (flag_online)
       {
-        avatar.setExpression(Expression::Doubt);
         flag_mp3_begin = true;
-        delay(1000);
       }
       else{
         Serial.println("# NOT mp3 begin (NOT ONLINE)");
